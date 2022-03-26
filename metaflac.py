@@ -1,4 +1,5 @@
 import io
+import re
 import struct
 
 from numpy import block
@@ -159,6 +160,8 @@ class MetaFlac:
             user_comment_list_length = struct.unpack('I', block[0:4])[0] # (32bits) user_comment_list_length
             block = block[4:]
 
+            regex_filter_string = r"[A-Fa-f0-9]{8}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{4}-[A-Fa-f0-9]{12}"
+
             for _ in range(user_comment_list_length):
                 length = struct.unpack('I', block[0:4])[0]
                 user_comment = block[4:4+length].decode('utf-8')
@@ -166,7 +169,9 @@ class MetaFlac:
                 block = block[4+length:]
                 if '=' in user_comment:
                     key, value = user_comment.split('=')
-                    vorbis_comment[key.lower()] = value
+
+                    if not re.search(regex_filter_string, key):
+                        vorbis_comment[key.lower()] = value
             return vorbis_comment
 
         return self._block_vorbis_comment
